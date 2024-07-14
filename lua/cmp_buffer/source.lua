@@ -58,6 +58,7 @@ source.complete = function(self, params, callback)
 		end
 	end
 
+	callback({})
 	vim.defer_fn(function()
 		local input = string.sub(params.context.cursor_before_line, params.offset)
 		local items = {}
