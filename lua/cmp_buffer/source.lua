@@ -30,7 +30,12 @@ end
 
 ---@return cmp_buffer.Options
 source._validate_options = function(_, params)
-	local opts = vim.tbl_deep_extend("keep", params.option, defaults)
+	local ok, opts = pcall(vim.tbl_deep_extend, "keep", params.option, defaults)
+	if not ok then
+		-- __AUTO_GENERATED_PRINT_VAR_START__
+		print([==[function params:]==], vim.inspect(params)) -- __AUTO_GENERATED_PRINT_VAR_END__
+		print(debug.traceback())
+	end
 	vim.validate({
 		keyword_length = { opts.keyword_length, "number" },
 		keyword_pattern = { opts.keyword_pattern, "string" },
@@ -42,11 +47,18 @@ source._validate_options = function(_, params)
 end
 
 source.get_keyword_pattern = function(self, params)
-	local opts = self:_validate_options(params)
-	return opts.keyword_pattern
+	-- local opts = self:_validate_options(params)
+	return defaults.keyword_pattern
 end
 
 source.complete = function(self, params, callback)
+	if vim.api.nvim_get_mode().mode == "c" then
+		local cmd = vim.trim(vim.fn.getcmdline())
+		if cmd:find("\\.\\{-}", nil, true) ~= nil then
+			callback({})
+			return
+		end
+	end
 	local opts = self:_validate_options(params)
 
 	local processing = false
@@ -58,7 +70,6 @@ source.complete = function(self, params, callback)
 		end
 	end
 
-	callback({})
 	vim.defer_fn(function()
 		local input = string.sub(params.context.cursor_before_line, params.offset)
 		local items = {}
